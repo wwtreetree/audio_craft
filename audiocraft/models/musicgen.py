@@ -8,11 +8,11 @@
 Main model for using MusicGen. This will combine all the required components
 and provide easy access to the generation API.
 """
-
 import typing as tp
 import warnings
-
 import torch
+import torch.nn as nn
+
 
 from .encodec import CompressionModel
 from .genmodel import BaseGenModel
@@ -21,7 +21,6 @@ from .builders import get_debug_compression_model, get_debug_lm_model
 from .loaders import load_compression_model, load_lm_model
 from ..data.audio_utils import convert_audio
 from ..modules.conditioners import ConditioningAttributes, WavCondition
-
 
 MelodyList = tp.List[tp.Optional[torch.Tensor]]
 MelodyType = tp.Union[torch.Tensor, MelodyList]
@@ -48,10 +47,36 @@ class MusicGen(BaseGenModel):
             otherwise, inferred from the training params.
     """
     def __init__(self, name: str, compression_model: CompressionModel, lm: LMModel,
-                 max_duration: tp.Optional[float] = None):
+                 max_duration: tp.Optional[float] = None, sparsity: float = 0.1):
         super().__init__(name, compression_model, lm, max_duration)
         self.set_generation_params(duration=15)  # default duration
 
+        # Apply pruning to specific layers ============
+        self.sparsity = sparsity
+        self.apply_pruning()
+
+
+    def prune(self, W, X, s):
+        # Compute the pruning metric based on weight matrix W and input matrix X
+        metric = W.abs() * X.norm(p=2, dim=0)
+        # Sort the metric values
+        _, sorted_idx = torch.sort(metric, dim=1)
+        # Determine the indices to prune based on the sparsity level s
+        pruned_idx = sorted_idx[:, :int(W.size(1) * s)]
+        # Zero out the pruned indices
+        W.scatter_(dim=1, index=pruned_idx, src=torch.zeros_like(pruned_idx, dtype=W.dtype))
+        return W
+
+
+    def apply_pruning(self):
+        for module in self.modules():
+            if isinstance(module, (nn.Linear, nn.Conv2d, nn.Conv1d)):
+                W = module.weight.data
+                X = torch.rand_like(W)  # Replace with actual input matrix X     ??? 我想要每层的output 
+                pruned_W = self.prune(W, X, self.sparsity)
+                module.weight.data = pruned_W
+
+                
     @staticmethod
     def get_pretrained(name: str = 'facebook/musicgen-melody', device=None):
         """Return pretrained model, we provide four models:
@@ -87,7 +112,6 @@ class MusicGen(BaseGenModel):
         if 'self_wav' in lm.condition_provider.conditioners:
             lm.condition_provider.conditioners['self_wav'].match_len_on_eval = True
             lm.condition_provider.conditioners['self_wav']._use_masking = False
-
         return MusicGen(name, compression_model, lm)
 
     def set_generation_params(self, use_sampling: bool = True, top_k: int = 250,

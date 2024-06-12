@@ -161,6 +161,7 @@ class MusicGenSolver(base.StandardSolver):
                 self.scaler = torch.cuda.amp.GradScaler()
             self.register_stateful('scaler')
 
+            
     def build_dataloaders(self) -> None:
         """Instantiate audio dataloaders for each stage."""
         self.dataloaders = builders.get_audio_datasets(self.cfg, dataset_type=self.DATASET_TYPE)
