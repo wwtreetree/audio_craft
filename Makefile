@@ -12,6 +12,7 @@ INTEG_MBD = $(INTEG) solver=diffusion/debug dset=audio/example  \
 
 default: linter tests
 
+
 install:
 	pip install -U pip
 	pip install -U -e '.[dev]'
