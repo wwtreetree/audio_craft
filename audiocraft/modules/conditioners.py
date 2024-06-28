@@ -1409,7 +1409,7 @@ class ConditionFuser(StreamingModule):
             ).view(1, -1, 1)
             pos_emb = create_sin_embedding(positions, cross_attention_output.shape[-1])
             cross_attention_output = cross_attention_output + self.cross_attention_pos_emb_scale * pos_emb
-
+            
         if self._is_streaming:
             self._streaming_state['offsets'] = offsets + T
 

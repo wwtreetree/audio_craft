@@ -23,6 +23,7 @@ from .builders import get_wrapped_compression_model
 from ..data.audio_utils import convert_audio
 from ..modules.conditioners import ConditioningAttributes
 from ..utils.autocast import TorchAutocast
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 
 class BaseGenModel(ABC):

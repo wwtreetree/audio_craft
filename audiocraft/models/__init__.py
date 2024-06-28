@@ -15,6 +15,6 @@ from .audiogen import AudioGen
 from .lm import LMModel
 from .lm_magnet import MagnetLMModel
 from .multibanddiffusion import MultiBandDiffusion
-from .musicgen import MusicGen
+from .musicgen_origin import MusicGen
 from .magnet import MAGNeT
 from .unet import DiffusionUnet

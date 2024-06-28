@@ -364,7 +364,9 @@ class StreamingMultiheadAttention(StreamingModule):
                     # profiling breaks that propertysomehow.
                     assert query is key, "specialized implementation"
                     assert value is key, "specialized implementation"
-                projected = nn.functional.linear(query, self.in_proj_weight, self.in_proj_bias)
+
+                #print("linear type: ", self.in_proj_weight.type())
+                projected = nn.functional.linear(query, self.in_proj_weight.to(torch.float32), self.in_proj_bias)
                 if self.kv_repeat == 1:
                     if time_dim == 2:
                         bound_layout = "b h p t d"
@@ -709,7 +711,6 @@ class StreamingTransformer(StreamingModule):
 
         if self._is_streaming:
             self._streaming_state['offsets'] = offsets + T
-
         return x
 
     def make_optim_group(self):
@@ -722,7 +723,6 @@ class StreamingTransformer(StreamingModule):
 
 
 # special attention related function
-
 def _verify_xformers_memory_efficient_compat():
     try:
         from xformers.ops import memory_efficient_attention, LowerTriangularMask  # noqa
