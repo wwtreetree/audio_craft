@@ -1,6 +1,9 @@
 # Shu's output
 *.wav
 
+# idk what this is but we are ifgnoring this for now
+typing_extensions.py
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
