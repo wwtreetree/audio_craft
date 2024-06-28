@@ -104,6 +104,7 @@ def prepare_calibration_input(model, dataloader, device):
     print("dtype: ", dtype)
     
     #inps = torch.zeros((128, model.seqlen, model.config.hidden_size), dtype=dtype, device=device)
+    
     inps = torch.zeros((128, 1, 1536), dtype=dtype, device=device)      #昨天是二维的
     print("yes")
     inps.requires_grad = False
