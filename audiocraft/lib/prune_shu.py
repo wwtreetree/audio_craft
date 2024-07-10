@@ -7,6 +7,13 @@ from .layerwrapper import WrappedGPT
 from .data import get_loaders 
 from .ablate import AblateGPT 
 from ..modules.conditioners import ConditioningAttributes, WavCondition,JointEmbedCondition
+from transformers import (
+         MusicgenConfig,
+         MusicgenDecoderConfig,
+         T5Config,
+         EncodecConfig,
+       MusicgenForConditionalGeneration,
+    )
 
 text_conditions = {
         "description": "Generate a happy song",
@@ -94,7 +101,11 @@ def prepare_calibration_input(model, dataloader, device):
     # use_cache = model.config.use_cache
     # model.config.use_cache = False
 
+    #layers = model.transformer.layers
     layers = model.transformer.layers
+
+
+
     #dev = model.hf_device_map["model.embed_tokens"]
     # if "model.embed_tokens" in model.hf_device_map:
     #     device = model.hf_device_map["model.embed_tokens"]
@@ -105,7 +116,7 @@ def prepare_calibration_input(model, dataloader, device):
     
     #inps = torch.zeros((128, model.seqlen, model.config.hidden_size), dtype=dtype, device=device)
     
-    inps = torch.zeros((128, 1, 1536), dtype=dtype, device=device)      #昨天是二维的
+    inps = torch.zeros((128, model.card, model.dim), dtype=dtype, device=device)      #昨天是二维的
     print("yes")
     inps.requires_grad = False
     cache = {'i': 0, 'attention_mask': None, "position_ids": None}
@@ -183,6 +194,7 @@ def prune_wanda(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0
     with torch.no_grad():
         inps, outs, attention_mask, position_ids = prepare_calibration_input(model, dataloader, device)
     
+
     layers = model.transformer.layers
     for i in range(len(layers)):
         layer = layers[i]
@@ -214,16 +226,21 @@ def prune_wanda(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0
                 #64 24
                 #outs[j] = layer(inps[j].unsqueeze(0).unsqueeze(0))
                 #outs[j] = layer(inps[j].unsqueeze(0), src_mask=attention_mask, cross_attention_src=position_ids)[0]
+
                 print('input shape: ', inps[j].shape)
                 print('input type: ', position_ids)
                 print("outs_j size: ", outs[j].shape)
-                print("layer size: ", layer(torch.reshape(inps[j], (1, 1,1536)), src_mask=attention_mask, cross_attention_src=position_ids)[0].shape)
+
+
+
+                #print("layer size: ", layer(torch.reshape(inps[j], (1, 1,1536)), src_mask=attention_mask, cross_attention_src=position_ids)[0].shape)
                 #outs[j] = layer(torch.reshape(inps[j], (1, 1,1536)), src_mask=attention_mask, cross_attention_src=position_ids)[0]
-                outs[j] = layer(inps[j].unsqueeze(0), src_mask=attention_mask, cross_attention_src=position_ids)[0]
-
-
                 
-                
+
+                print("llll", layer)
+                outs[j] = layer(inps[j].unsqueeze(0),src_mask=attention_mask, cross_attention_src=position_ids)[0]
+            
+
                 #outs[j] = layer(inps[j].unsqueeze(0))
                 # print("input type",inps[j].dtype)
                 # print("weight type", layer.weight.dtype)
@@ -271,11 +288,11 @@ def prune_wanda(args, model, tokenizer, device=torch.device("cuda:0"), prune_n=0
             subset[name].weight.data[W_mask] = 0        ## set weights to zero 
         for j in range(args.nsamples):
             with torch.no_grad():
-                #outs[j] = layer(inps[j].unsqueeze(0), attention_mask=attention_mask, position_ids=position_ids)[0]
+                outs[j] = layer(inps[j].unsqueeze(0), src_mask=attention_mask, cross_attention_src=position_ids)[0]
 
                 #outs[j] = layer(inps[j].unsqueeze(0))[0]
-                outs[j] = layer(torch.reshape(inps[j], (1, 1,1536)), src_mask=attention_mask, cross_attention_src=position_ids)[0]
-
+                #outs[j] = layer(torch.reshape(inps[j], (1, 100,1536)), src_mask=attention_mask, cross_attention_src=position_ids)[0]
+                
         inps, outs = outs, inps
     # model.config.use_cache = use_cache 
     torch.cuda.empty_cache()    # transformer model usually

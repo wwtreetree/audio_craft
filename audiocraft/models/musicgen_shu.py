@@ -21,7 +21,7 @@ from .builders import get_debug_compression_model, get_debug_lm_model
 from .loaders import load_compression_model, load_lm_model
 from ..data.audio_utils import convert_audio
 from ..modules.conditioners import ConditioningAttributes, WavCondition
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, MusicgenForConditionalGeneration
 
 MelodyList = tp.List[tp.Optional[torch.Tensor]]
 MelodyType = tp.Union[torch.Tensor, MelodyList]

@@ -177,7 +177,7 @@ class LMModel(StreamingModule):
 
     def _init_weights(self, weight_init: tp.Optional[str], depthwise_init: tp.Optional[str], zero_bias_init: bool):
         """Initialization of the transformer module weights.
-        
+
         Args:
             weight_init (str, optional): Weight initialization strategy. See ``get_init_fn`` for valid options.
             depthwise_init (str, optional): Depthwise initialization strategy. The following options are valid:
@@ -193,7 +193,6 @@ class LMModel(StreamingModule):
 
         if weight_init is None:
             return
-
         for emb_layer in self.emb:
             init_layer(emb_layer, method=weight_init, init_depth=None, zero_bias_init=zero_bias_init)
 

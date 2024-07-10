@@ -84,7 +84,6 @@ parser.add_argument("--cache_dir", default="llm_weights", type=str )
 parser.add_argument('--use_variant', action="store_true", help="whether to use the wanda variant described in the appendix")
 parser.add_argument('--save', type=str, default=None, help='Path to save results.')
 parser.add_argument('--save_model', type=str, default=None, help='Path to save the pruned model.')
-
 parser.add_argument("--eval_zero_shot", action="store_true")
 args = parser.parse_args()
 
@@ -100,8 +99,10 @@ prune_wanda(args, model.lm, tokenizer, device, prune_n=prune_n, prune_m=prune_m)
 wav = model.generate(descriptions)              # generates 3 samples.
 
 
+
 for idx, one_wav in enumerate(wav):
     # Will save under {idx}.wav, with loudness normalization at -14 db LUFS.
+    print("shape: ", one_wav.shape)
     audio_write(f'{idx}', one_wav.cpu(), model.sample_rate, strategy= "loudness", loudness_compressor=True)
 
 
